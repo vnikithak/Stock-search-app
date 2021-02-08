@@ -1,0 +1,149 @@
+<html lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta name="author" content="Script Tutorials" />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no'>
+    <title>Highcharts</title>
+</head>
+<body>
+<div id="chart" style="height: 300px;" class="chart"></div>
+<script src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+<script src="https://code.highcharts.com/stock/highstock.js"></script>
+<script src="https://code.highcharts.com/stock/modules/data.js"></script>
+<script src="https://code.highcharts.com/stock/modules/drag-panes.js"></script>
+<script src="https://code.highcharts.com/stock/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/stock/indicators/indicators.js"></script>
+<script src="https://code.highcharts.com/stock/indicators/volume-by-price.js"></script>
+<script type='text/javascript'>
+    window.onload =function() {
+
+    function makerequest(url, fun)
+    {
+        var req = false;
+        if(window.XMLHttpRequest)
+        {
+            try
+            {
+                req = new XMLHttpRequest();
+            }catch(e) { req = false; }
+        }
+        else if(window.ActiveXObject)
+        {
+            try
+            {
+                req = new ActiveXObject("Msxml2.XMLHTTP");
+            } catch(e)
+            {
+                try
+                { req = new ActiveXObject("Microsoft.XMLHTTP"); }
+                catch(e) { req = false; }
+            }
+	}
+	if(req)
+	{
+		req.onreadystatechange = function() {
+            if (req.readyState == 4)
+            {
+                if (req.status == 200)
+                    fun(JSON.parse(req.responseText));
+            }
+         };
+		req.open("GET",url, true);
+		req.send("");
+	    }
+    }
+
+
+    function processData(data) {
+        var groupingUnits = [['week', [1]], ['month',[1, 2, 3, 4, 6]]];
+        ohlc=data['ohlc'];
+        volume=data['volume'];
+        console.log(ohlc[0]);
+        Highcharts.stockChart('chart', {
+            rangeSelector: {
+                selected: 2
+            },
+            yAxis: [{
+                startOnTick: false,
+                endOnTick: false,
+                labels: {
+                    align: 'right',
+                    x: -3
+                },
+                title: {
+                    text: 'OHLC'
+                },
+                height: '60%',
+                lineWidth: 2,
+                resize: {
+                    enabled: true
+                }
+            }, {
+                labels: {
+                    align: 'right',
+                    x: -3
+                },
+                title: {
+                    text: 'Volume'
+                },
+                top: '65%',
+                height: '35%',
+                offset: 0,
+                lineWidth: 2
+            }],
+
+            tooltip: {
+                split: true
+            },
+
+            plotOptions: {
+                series: {
+                    dataGrouping: {
+                        units: groupingUnits
+                    }
+                }
+            },
+
+            series: [{
+                type: 'candlestick',
+                name: ticker.toUpperCase(),
+                id: ticker.toUpperCase(),
+                zIndex: 2,
+                data: ohlc
+            }, {
+                type: 'column',
+                name: 'Volume',
+                id: 'volume',
+                data: volume,
+                yAxis: 1
+            }, {
+                type: 'vbp',
+                linkedTo: ticker.toUpperCase(),
+                params: {
+                    volumeSeriesID: 'volume'
+                },
+                dataLabels: {
+                    enabled: false
+                },
+                zoneLines: {
+                    enabled: false
+                }
+            }, {
+                type: 'sma',
+                linkedTo: ticker.toUpperCase(),
+                zIndex: 1,
+                marker: {
+                    enabled: false
+                }
+            }]
+        });
+    }
+    var query = window.location.search.substring(1);
+    var vars = query.split("&");
+    var ticker = (vars[0].split("="))[1];
+    makerequest("https://android-iasr2722-backend.wl.r.appspot.com/details/charts/ticker="+ticker,processData);
+
+}
+</script>
+</body>
+</html>
